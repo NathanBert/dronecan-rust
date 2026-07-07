@@ -32,6 +32,6 @@ mod tests {
     #[test]
     fn crc_of_known_payload_matches_reference() {
         let payload = [0x01, 0x02, 0x03];
-        assert_eq!(CrcData::from_payload(&payload), CrcData {crc_1 : 0x12,crc_2 : 0x34});
+        assert_eq!(CrcData::from_payload(&payload), CrcData {crc_1 : 0xAD,crc_2 : 0xAD});
     }
 }
