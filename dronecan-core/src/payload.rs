@@ -1,10 +1,10 @@
-use crate::utils::{Crc};
+use crate::utils::{CrcData};
 use crate::tailbyte::{Tailbyte};
 
 
 
 pub struct StartMessagePayload {
-    pub crc: Crc,
+    pub crc: CrcData,
     pub payload: [u8; 5],
     pub tailbyte: Tailbyte,
 }
@@ -20,12 +20,11 @@ impl StartMessagePayload {
             payload[i] = ((bits >> shift) & 0xFF) as u8;
         }
 
-        let tailbyte = Tailbyte {
-            value: (bits & 0xFF) as u8,
-        };
+        let tailbyte = Tailbyte::from_value((bits & 0xFF) as u8);
+
 
         Self {
-            crc: Crc { crc_1, crc_2 },
+            crc: CrcData { crc_1, crc_2 },
             payload,
             tailbyte,
         }
@@ -33,7 +32,7 @@ impl StartMessagePayload {
 }
 
 pub struct MiddleMessagePayload {
-    pub crc: Crc,
+    pub crc: CrcData,
     pub payload: [u8; 5],
     pub tailbyte: Tailbyte,
 }
@@ -49,12 +48,10 @@ impl MiddleMessagePayload {
             payload[i] = ((bits >> shift) & 0xFF) as u8;
         }
 
-        let tailbyte = Tailbyte {
-            value: (bits & 0xFF) as u8,
-        };
+        let tailbyte = Tailbyte::from_value((bits & 0xFF) as u8);
 
         Self {
-            crc: Crc { crc_1, crc_2 },
+            crc: CrcData { crc_1, crc_2 },
             payload,
             tailbyte,
         }
@@ -78,9 +75,8 @@ impl EndMessagePayload {
             .collect::<Vec<u8>>();
 
         let tail_shift = 56usize.saturating_sub(payload_len * 8);
-        let tailbyte = Tailbyte {
-            value: ((bits >> tail_shift) & 0xFF) as u8,
-        };
+
+        let tailbyte = Tailbyte::from_value(((bits >> tail_shift) & 0xFF) as u8);
 
         Self { payload, tailbyte, payload_len : payload_len as u8}
     }
@@ -102,9 +98,7 @@ impl SingleMessagePayload {
             .collect::<Vec<u8>>();
 
         let tail_shift = 56usize.saturating_sub(payload_len * 8);
-        let tailbyte = Tailbyte {
-            value: ((bits >> tail_shift) & 0xFF) as u8,
-        };
+        let tailbyte = Tailbyte::from_value(((bits >> tail_shift) & 0xFF) as u8);
 
         Self { payload, tailbyte, payload_len : payload_len as u8 }
     }

@@ -1,12 +1,10 @@
-use embedded_can::{Frame, Id, StandardId, ExtendedId};
+use embedded_can::{Frame, Id};
 
 use crate::message_type::{MessageTypeId, 
                           AnoMessageTypeId, 
                           ServiceTypeId, 
                           MessageIdMiddleBytes};
 
-use crate::utils::{Crc};
-use crate::tailbyte::{Tailbyte};
 
 use crate::payload::{PayloadType, 
                      EndMessagePayload, 
@@ -28,10 +26,6 @@ pub struct DroneCanFrame {
     raw_data: [u8; 8],
     dlc: usize,
 }
-
-
-
-
 
 
 
