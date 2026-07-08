@@ -28,7 +28,6 @@ pub struct DroneCanFrame {
 }
 
 
-
 impl Frame for DroneCanFrame {
     fn new(id: impl Into<Id>, data: &[u8]) -> Option<Self> {
 
@@ -133,10 +132,6 @@ impl Frame for DroneCanFrame {
         &self.raw_data[..self.dlc]
     }
 }
-
-
-
-
 
 
 #[cfg(test)]
