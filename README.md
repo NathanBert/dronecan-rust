@@ -5,7 +5,10 @@
 [![Cargo Build Status](https://img.shields.io/github/actions/workflow/status/NathanBert/dronecan-rust/ci.yml?branch=main&label=CI)](https://github.com/NathanBert/dronecan-rust/actions)
 [![License](https://img.shields.io/crates/l/dronecan)](./LICENSE)
 [![No_std](https://img.shields.io/badge/no__std-compatible-green)](./README.md)
-
+[![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](./README.md)
+[![Documentation](https://img.shields.io/docsrs/dronecan-core)](./README.md)
+[![Crates.io](https://img.shields.io/crates/v/dronecan-core.svg)](./README.md)
+[![Downloads](https://img.shields.io/crates/d/dronecan-core.svg)](./README.md)
 ---
 
 ## 📖 Vue d'ensemble
