@@ -103,10 +103,10 @@ Chaque crate possède un module `#[cfg(test)]` interne pour valider :
 
 ### Phase 1 — Core protocolaire
 
-- [] Gestion des transfers DroneCAN
-- [] Encodage/décodage CRC
-- [] Fragmentation multi-frame
-- [] Tests unitaires
+- [ ] Gestion des transfers DroneCAN
+- [ ] Encodage/décodage CRC
+- [ ] Fragmentation multi-frame
+- [ ] Tests unitaires
 
 ### Phase 2 — Node fonctionnel
 
