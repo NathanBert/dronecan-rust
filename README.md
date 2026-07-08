@@ -1,66 +1,74 @@
 # dronecan-rust
 
-**Implémentation native Rust de DroneCAN** — stack protocolaire complète, `no_std`, compatible avec l'écosystème `embedded-hal` et pensée pour les systèmes embarqués temps réel (STM32, RP2040, ESP32, etc.).
+**A native Rust implementation of DroneCAN** — a complete `no_std` protocol stack, compatible with the `embedded-hal` ecosystem and designed for real-time embedded systems (STM32, RP2040, ESP32, etc.).
 
-[![Cargo Build Status](https://img.shields.io/github/actions/workflow/status/NathanBert/dronecan-rust/ci.yml?branch=main&label=CI)](https://github.com/NathanBert/dronecan-rust/actions)
+[![Cargo Build Status](https://img.shields.io/github/actions/workflow/status/NathanBert/dronecan-rust/ci.yml?branch=main\&label=CI)](https://github.com/NathanBert/dronecan-rust/actions)
 [![License](https://img.shields.io/crates/l/dronecan)](./LICENSE)
-[![No_std](https://img.shields.io/badge/no__std-compatible-green)](./README.md)
+[![No\_std](https://img.shields.io/badge/no__std-compatible-green)](./README.md)
 [![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](./README.md)
 [![Documentation](https://img.shields.io/docsrs/dronecan-core)](./README.md)
 [![Crates.io](https://img.shields.io/crates/v/dronecan-core.svg)](./README.md)
 [![Downloads](https://img.shields.io/crates/d/dronecan-core.svg)](./README.md)
+
 ---
 
-## 📖 Vue d'ensemble
+## 📖 Overview
 
-DroneCAN est le protocole de communication embarqué utilisé par PX4, ArduPilot et de nombreux systèmes UAV. Ce projet vise à fournir une alternative Rust crédible à `libcanard` (C) et `canadensis` (Cyphal/Rust), avec :
+DroneCAN is an embedded communication protocol widely used in UAV systems such as PX4, ArduPilot, and many other autonomous platforms.
 
-- **Sécurité mémoire** garantie par le typage Rust
-- **Tests unitaires/intégration** avec couverture élevée
-- **Génération de code DSDL** automatisée
-- **Interopérabilité complète** avec l'écosystème existant (PX4, ArduPilot, libcanard)
+This project aims to provide a modern Rust alternative to existing implementations such as `libcanard` (C) and `canadensis` (Cyphal/Rust), featuring:
 
-Contrairement à `umi-eng/dronecan-rust` (qui cible `std`), `dronecan-rust` est conçu pour fonctionner sur des microcontrôleurs sans allocateurs, en utilisant exclusivement `heapless` et `embedded-hal`.
+* **Memory safety** guaranteed by Rust's type system
+* **High test coverage** with unit and integration tests
+* **Automated DSDL code generation**
+* **Full interoperability** with the existing ecosystem (PX4, ArduPilot, libcanard)
+
+Unlike `umi-eng/dronecan-rust` (which targets `std` environments), `dronecan-rust` is designed for allocator-free microcontrollers, using exclusively `heapless` data structures and `embedded-hal` abstractions.
 
 ---
 
 ## 🏗️ Architecture
 
-Le projet est organisé en **workspace Cargo** multi-crates :
+The project is organized as a multi-crate **Cargo workspace**:
 
-| Crate | Rôle | Statut |
-|-------|------|--------|
-| [`dronecan-core`](./crates/dronecan-core) | Protocole pur (CRC, fragmentation, réassemblage) | ✅ en cours |
-| [`dronecan-transport-can`](./crates/dronecan-transport-can) | Couche d'abstraction CAN (`embedded-can`) | 🔜 à venir |
-| [`dronecan-node`](./crates/dronecan-node) | API haut niveau (publishers, subscribers, services) | 🔜 à venir |
-| [`dronecan-dsdl`](./crates/dronecan-dsdl) | Parseur DSDL vers AST | 🔜 à venir |
-| [`dronecan-dsdl-gen`](./crates/dronecan-dsdl-gen) | Générateur de code Rust | 🔜 à venir |
-| [`dronecan-types`](./crates/dronecan-types) | Messages standards pré-générés | 🔜 à venir |
-| [`dronecan-testkit`](./crates/dronecan-testkit) | Bus CAN virtuel pour tests sans hardware | 🔜 à venir |
-| [`dronecan-mavlink-bridge`](./cronecan-mavlink-bridge) | Pont MAVLink ↔ DroneCAN | 📝 à long terme |
+| Crate                                                         | Description                                                   | Status        |
+| ------------------------------------------------------------- | ------------------------------------------------------------- | ------------- |
+| [`dronecan-core`](./crates/dronecan-core)                     | Core protocol implementation (CRC, fragmentation, reassembly) | ✅ In progress |
+| [`dronecan-transport-can`](./crates/dronecan-transport-can)   | CAN transport abstraction (`embedded-can`)                    | 🔜 Planned    |
+| [`dronecan-node`](./crates/dronecan-node)                     | High-level API (publishers, subscribers, services)            | 🔜 Planned    |
+| [`dronecan-dsdl`](./crates/dronecan-dsdl)                     | DSDL parser and AST generation                                | 🔜 Planned    |
+| [`dronecan-dsdl-gen`](./crates/dronecan-dsdl-gen)             | Rust code generator                                           | 🔜 Planned    |
+| [`dronecan-types`](./crates/dronecan-types)                   | Pre-generated standard message types                          | 🔜 Planned    |
+| [`dronecan-testkit`](./crates/dronecan-testkit)               | Virtual CAN bus for hardware-free testing                     | 🔜 Planned    |
+| [`dronecan-mavlink-bridge`](./crates/dronecan-mavlink-bridge) | MAVLink ↔ DroneCAN bridge                                     | 📝 Long-term  |
 
 ---
 
-## 🚀 Fonctionnalités actuelles
+## 🚀 Current Features
 
 ### `dronecan-core` (WIP)
 
-- ✅ Encodage/décodage des IDs CAN 29 bits (priorité, type de message, node ID)
-- ✅ Gestion des transfers multi-frame (Start, Middle, End, Single)
-- ✅ Calcul CRC-16/CCITT-FALSE correct (polynôme `0x1021`, init `0xFFFF`)
-- ✅ Structuration des payloads (CRC interne, tailbyte)
-- ✅ Tests unitaires avec Golden Frames (libcanard, pydronecan)
+* ✅ Encode/decode 29-bit CAN identifiers (priority, message type, node ID)
+* ✅ Multi-frame transfer handling (Start, Middle, End, Single)
+* ✅ Correct CRC-16/CCITT-FALSE implementation (`poly=0x1021`, `init=0xFFFF`)
+* ✅ Payload handling (internal CRC, tail byte)
+* ✅ Unit tests using golden frames from `libcanard` and `pydronecan`
 
-### Exemple rapide
+---
+
+## Example
 
 ```rust
 use dronecan_core::DroneCanFrame;
 use embedded_can::Frame;
 
-// Créer une frame depuis un ID étendu et un payload
-let frame = DroneCanFrame::new(ExtendedId::new(0x18FF0001), &[0x01, 0x02, 0x03]);
+// Create a frame from an extended CAN ID and payload
+let frame = DroneCanFrame::new(
+    ExtendedId::new(0x18FF0001),
+    &[0x01, 0x02, 0x03],
+);
 
-// Parser une frame reçue
+// Parse an incoming frame
 if let Some(rx_frame) = DroneCanFrame::new(id, data) {
     println!("Type: {:?}", rx_frame.mtid);
 }
@@ -68,107 +76,124 @@ if let Some(rx_frame) = DroneCanFrame::new(id, data) {
 
 ---
 
-## 🛠️ Compilation et usage
+## 🛠️ Build & Usage
 
 ### Build
 
 ```bash
-# Build complet workspace
+# Build the complete workspace
 cargo build --workspace
-
 ```
 
 ### Tests
 
 ```bash
-# Tous les tests workspace
+# Run all workspace tests
 cargo test --workspace
 
-# Tests unitaires une crate
+# Run tests for a specific crate
 cargo test -p dronecan-core
 ```
 
 ---
 
-## 🔬 Méthodologie de tests
+## 🔬 Testing Methodology
 
-### Tests unitaires
+Each crate contains internal `#[cfg(test)]` modules validating:
 
-Chaque crate possède un module `#[cfg(test)]` interne pour valider :
-
-- CRC, buffers, IDs CAN
-- Encodage/décodage des payloads
-- Gestion des erreurs
+* CRC computation
+* CAN ID encoding/decoding
+* Buffer handling
+* Payload serialization/deserialization
+* Error handling
 
 ---
 
 ## 🎯 Roadmap
 
-### Phase 1 — Core protocolaire
+### Phase 1 — Protocol Core
 
-- [ ] Gestion des transfers DroneCAN
-- [ ] Encodage/décodage CRC
-- [ ] Fragmentation multi-frame
-- [ ] Tests unitaires
+* [ ] DroneCAN transfer handling
+* [ ] CRC encoding/decoding
+* [ ] Multi-frame fragmentation and reassembly
+* [ ] Unit test coverage
 
-### Phase 2 — Node fonctionnel
+### Phase 2 — Functional Node
 
-- [ ] Interface CAN hardware (STM32 FDCAN, ESP32 TWAI)
-- [ ] Node avec publishers/subscribers
-- [ ] Gestion des services
-- [ ] Node allocation
+* [ ] Hardware CAN interfaces (STM32 FDCAN, ESP32 TWAI)
+* [ ] Node publishers/subscribers
+* [ ] Service handling
+* [ ] Dynamic node allocation
 
-### Phase 3 — DSDL
+### Phase 3 — DSDL Ecosystem
 
-- [ ] Parseur DSDL
-- [ ] Générateur Rust
-- [ ] Messages standards pré-générés
+* [ ] DSDL parser
+* [ ] Rust code generator
+* [ ] Pre-generated standard message types
 
-### Phase 4 — Industrialisation (🔜 0%)
+### Phase 4 — Production Readiness
 
-- [ ] Compatibilité PX4/ArduPilot validée
-- [ ] Documentation complète
-- [ ] Exemples hardware
+* [ ] Validated PX4 and ArduPilot compatibility
+* [ ] Complete documentation
+* [ ] Hardware examples
 
 ---
 
 ## 📚 Documentation
 
-- [Spec DroneCAN](https://dronecan.github.io/Specification/)
-- [Implementations officielles](https://dronecan.github.io/Implementations/)
+* [DroneCAN Specification](https://dronecan.github.io/Specification/)
+* [Official Implementations](https://dronecan.github.io/Implementations/)
 
 ---
 
-## 🤝 Contribuer
+## 🤝 Contributing
 
-1. Forke le repo
-2. Crée ta feature branch (`git checkout -b feature/ma-nouvelle-fonction`)
-3. Commit (`git commit -am 'Ajoute une fonction'`)
-4. Push (`git push origin feature/ma-nouvelle-fonction`)
-5. Ouvre une Pull Request
+1. Fork the repository
+2. Create your feature branch:
+
+```bash
+git checkout -b feature/my-new-feature
+```
+
+3. Commit your changes:
+
+```bash
+git commit -am "Add new feature"
+```
+
+4. Push your branch:
+
+```bash
+git push origin feature/my-new-feature
+```
+
+5. Open a Pull Request
 
 ---
 
-## 📄 Licence
+## 📄 License
 
-Dual-licensed sous **MIT** ou **Apache-2.0** à votre choix.
+Dual-licensed under your choice of:
+
+* MIT License
+* Apache License 2.0
 
 ---
 
 ## 📞 Support
 
-- Issues : [GitHub Issues](https://github.com/NathanBert/dronecan-rust/issues)
+* GitHub Issues: https://github.com/NathanBert/dronecan-rust/issues
 
 ---
 
-## 🙏 Crédits
+## 🙏 Credits
 
-Inspiration directe de :
+Inspired by:
 
-- [`libcanard`](https://github.com/dronecan/libcanard) (C)
-- [`canadensis`](https://github.com/samcrow/canadensis) (Rust Cyphal)
-- [`umi-eng/dronecan-rust`](https://github.com/umi-eng/dronecan-rust) (Rust DroneCAN)
+* [`libcanard`](https://github.com/dronecan/libcanard) (C implementation)
+* [`canadensis`](https://github.com/samcrow/canadensis) (Rust Cyphal implementation)
+* [`umi-eng/dronecan-rust`](https://github.com/umi-eng/dronecan-rust) (Rust DroneCAN implementation)
 
 ---
 
-**Statut actuel** : Alpha, API non stable, tests en cours.
+**Current status:** Alpha — API unstable, active development, test coverage improving.
