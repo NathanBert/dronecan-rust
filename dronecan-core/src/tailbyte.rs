@@ -81,12 +81,10 @@ impl Tailbyte {
     pub fn set_transfer_id(&mut self, transfer_id: u8) {
         let transfer_id = transfer_id & Self::TRANSFER_ID_MASK;
 
-        self.value = (self.value & !Self::TRANSFER_ID_MASK)
-            | (transfer_id << Self::TRANSFER_ID_SHIFT);
+        self.value =
+            (self.value & !Self::TRANSFER_ID_MASK) | (transfer_id << Self::TRANSFER_ID_SHIFT);
     }
 }
-
-
 
 #[test]
 fn roundtrip_parts_value() {

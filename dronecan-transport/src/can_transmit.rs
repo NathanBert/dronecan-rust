@@ -5,4 +5,3 @@ pub trait CanTransmit {
     type Error;
     fn transmit(&mut self, frame: &Self::Frame) -> Result<(), Self::Error>;
 }
-

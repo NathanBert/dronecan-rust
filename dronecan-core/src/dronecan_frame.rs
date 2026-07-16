@@ -1,15 +1,8 @@
 use embedded_can::{Frame, Id};
 
-use crate::message_type::{MessageTypeId, 
-                          AnoMessageTypeId, 
-                          ServiceTypeId, 
-                          MessageIdMiddleBytes};
+use crate::message_type::{AnoMessageTypeId, MessageIdMiddleBytes, MessageTypeId, ServiceTypeId};
 
-
-use crate::payload::{PayloadType};
-
-
-
+use crate::payload::PayloadType;
 
 pub struct DroneCanFrame {
     pub id: Id,
@@ -18,34 +11,31 @@ pub struct DroneCanFrame {
     pub service_not_message: bool,
     pub source_node_id: u8,
     pub payload: PayloadType,
-    
+
     raw_data: [u8; 8],
     dlc: usize,
 }
 
-
 impl Frame for DroneCanFrame {
     fn new(id: impl Into<Id>, data: &[u8]) -> Option<Self> {
-
         let id = id.into();
         let len = data.len();
 
-        // Une frame DroneCAN a 
+        // Une frame DroneCAN a
         // au minimum un tailbyte (1 octet) et au max 8 octets
         if len == 0 || len > 8 {
             return None;
         }
-
 
         // 1. Parser l'ID (DroneCAN utilise exclusivement des ID étendus 29-bits)
         let (priority, mtid_val, service_not_message, source_node_id) = match id {
             Id::Extended(ext_id) => {
                 let raw = ext_id.as_raw();
                 (
-                    ((raw >> 24) & 0x1F) as u16,      // Priority: 5 bits
-                    ((raw >> 8) & 0xFFFF) as u16,     // Middle bytes: 16 bits
-                    ((raw >> 7) & 1) == 1,            // Service not message: 1 bit
-                    (raw & 0x7F) as u8,               // Source Node ID: 7 bits
+                    ((raw >> 24) & 0x1F) as u16,  // Priority: 5 bits
+                    ((raw >> 8) & 0xFFFF) as u16, // Middle bytes: 16 bits
+                    ((raw >> 7) & 1) == 1,        // Service not message: 1 bit
+                    (raw & 0x7F) as u8,           // Source Node ID: 7 bits
                 )
             }
             Id::Standard(_) => return None, // Refusé en DroneCAN
@@ -106,7 +96,6 @@ impl Frame for DroneCanFrame {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -116,7 +105,7 @@ mod tests {
     fn test_create_and_parse_frame() {
         let id = ExtendedId::new(0x18FF0001).expect("Invalid ExtendedId");
         let payload = [0x01, 0x02, 0xC0];
-        
+
         let frame = DroneCanFrame::new(id, &payload).expect("Failed to create frame");
 
         assert!(frame.is_extended());
@@ -129,7 +118,7 @@ mod tests {
 
         let roundtrip = DroneCanFrame::new(frame.id(), frame.data())
             .expect("Failed to create frame from parsed data");
-        
+
         assert_eq!(roundtrip.priority, frame.priority);
         assert_eq!(roundtrip.source_node_id, frame.source_node_id);
     }
@@ -139,14 +128,14 @@ mod tests {
         let id = ExtendedId::new(0x18FF0001).expect("Invalid ExtendedId");
         // 7 bytes de payload + 1 byte tailbyte (0x80 = start, not end)
         let payload = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x80];
-        
+
         let frame = DroneCanFrame::new(id, &payload).expect("Failed to create start frame");
-        
+
         assert_eq!(frame.dlc(), 8);
-        
+
         // Vérifier que c'est un StartMessagePayload
         match &frame.payload {
-            PayloadType::StartMessagePayload(_) => {}, // OK
+            PayloadType::StartMessagePayload(_) => {} // OK
             _ => panic!("Expected StartMessagePayload"),
         }
     }
@@ -156,7 +145,7 @@ mod tests {
         // Payload trop long (>8 bytes) doit retourner None
         let id = ExtendedId::new(0x18FF0001).expect("Invalid ExtendedId");
         let long_payload = [0; 9];
-        
+
         let result = DroneCanFrame::new(id, &long_payload);
         assert!(result.is_none());
     }
@@ -166,9 +155,8 @@ mod tests {
         // Payload vide est invalide (DLC=0)
         let id = ExtendedId::new(0x18FF0001).expect("Invalid ExtendedId");
         let empty_payload: [u8; 0] = [];
-        
+
         let frame = DroneCanFrame::new(id, &empty_payload);
         assert!(frame.is_none());
-
     }
 }

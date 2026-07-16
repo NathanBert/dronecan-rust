@@ -1,6 +1,5 @@
 use embedded_can::Frame;
 
-
 pub trait CanReceive {
     type Frame: Frame;
     type Error;

@@ -1,4 +1,4 @@
-use crc::{Crc};
+use crc::Crc;
 
 #[derive(PartialEq, Eq, Debug, Hash)]
 pub struct CrcData {
@@ -7,7 +7,6 @@ pub struct CrcData {
 }
 
 const TRANSFER_CRC: Crc<u16> = Crc::<u16>::new(&crc::CRC_16_IBM_3740);
-
 
 impl CrcData {
     pub fn from_payload(payload: &[u8]) -> Self {
@@ -23,8 +22,6 @@ impl CrcData {
     }
 }
 
-
-
 // D2FINIR UNE REFERENCE CALCULEE A PARTIR DE L'ALGO DEPUIS EXTERIEUR DU CODE
 #[cfg(test)]
 mod tests {
@@ -33,6 +30,12 @@ mod tests {
     #[test]
     fn crc_of_known_payload_matches_reference() {
         let payload = [0x01, 0x02, 0x03];
-        assert_eq!(CrcData::from_payload(&payload), CrcData {crc_1 : 0xAD,crc_2 : 0xAD});
+        assert_eq!(
+            CrcData::from_payload(&payload),
+            CrcData {
+                crc_1: 0xAD,
+                crc_2: 0xAD
+            }
+        );
     }
 }
