@@ -3,3 +3,4 @@ pub mod message_type;
 pub mod utils;
 pub mod tailbyte;
 pub mod payload;
+pub mod crate_tests;

@@ -6,11 +6,7 @@ use crate::message_type::{MessageTypeId,
                           MessageIdMiddleBytes};
 
 
-use crate::payload::{PayloadType, 
-                     EndMessagePayload, 
-                     MiddleMessagePayload, 
-                     StartMessagePayload, 
-                     SingleMessagePayload};
+use crate::payload::{PayloadType};
 
 
 
@@ -65,34 +61,11 @@ impl Frame for DroneCanFrame {
             MessageIdMiddleBytes::MessageTypeId(MessageTypeId::new(mtid_val))
         };
 
-        // 3. Préparer le u64 brut depuis le slice de u8 pour tes constructeurs Payload
+        // 3. Préparer le u64 brut depuis le slice de u8 pour les constructeurs Payload
         let mut raw_data = [0u8; 8];
         raw_data[..len].copy_from_slice(data);
-        let bits = u64::from_be_bytes(raw_data);
 
-        // 4. Lire le Tailbyte (le dernier octet valide) pour choisir la variante Payload
-        let tailbyte_val = data[len - 1];
-        let start_of_transfer = (tailbyte_val & 0x80) != 0; // Bit 7
-        let end_of_transfer = (tailbyte_val & 0x40) != 0;   // Bit 6
-        
-        let payload_len = len - 1; // La longueur du payload pur (sans le tailbyte)
-
-        let payload = match (start_of_transfer, end_of_transfer) {
-            (true, true) => {
-                PayloadType::SingleMessagePayload(SingleMessagePayload::new(bits, payload_len))
-            }
-            (true, false) => {
-                if len != 8 { return None; } // Start frame toujours pleine
-                PayloadType::StartMessagePayload(StartMessagePayload::new(bits))
-            }
-            (false, false) => {
-                if len != 8 { return None; } // Middle frame toujours pleine
-                PayloadType::MiddleMessagePayload(MiddleMessagePayload::new(bits))
-            }
-            (false, true) => {
-                PayloadType::EndMessagePayload(EndMessagePayload::new(bits, payload_len))
-            }
-        };
+        let payload = PayloadType::get_payload_type(raw_data, len)?;
 
         Some(DroneCanFrame {
             id,
@@ -165,7 +138,7 @@ mod tests {
     fn test_start_frame() {
         let id = ExtendedId::new(0x18FF0001).expect("Invalid ExtendedId");
         // 7 bytes de payload + 1 byte tailbyte (0x80 = start, not end)
-        let mut payload = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x80];
+        let payload = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x80];
         
         let frame = DroneCanFrame::new(id, &payload).expect("Failed to create start frame");
         

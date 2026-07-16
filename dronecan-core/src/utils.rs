@@ -1,12 +1,13 @@
 use crc::{Crc};
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Hash)]
 pub struct CrcData {
     pub crc_1: u8,
     pub crc_2: u8,
 }
 
 const TRANSFER_CRC: Crc<u16> = Crc::<u16>::new(&crc::CRC_16_IBM_3740);
+
 
 impl CrcData {
     pub fn from_payload(payload: &[u8]) -> Self {
