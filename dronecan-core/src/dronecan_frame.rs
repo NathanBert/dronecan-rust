@@ -57,6 +57,12 @@ impl Frame for DroneCanFrame {
 
         let payload = PayloadType::get_payload_type(raw_data, len)?;
 
+        // 4. Une frame anonyme est obligatoirement un message single frame
+        if matches!(mtid, MessageIdMiddleBytes::AnoMessageTypeId(_)) &&
+        !matches!(payload, PayloadType::SingleMessagePayload(_)) {
+            return None;
+        }
+
         Some(DroneCanFrame {
             id,
             priority,
@@ -158,5 +164,121 @@ mod tests {
 
         let frame = DroneCanFrame::new(id, &empty_payload);
         assert!(frame.is_none());
+    }
+
+    #[test]
+    fn test_standard_id_rejected() {
+        let id = embedded_can::StandardId::new(0x123).expect("Invalid StandardId");
+        let payload = [0x01, 0xC0];
+        assert!(DroneCanFrame::new(id, &payload).is_none());
+    }
+
+    #[test]
+    fn test_service_frame_parsing() {
+        // service_not_message = 1 (bit7), destination node id, service type id, request/response
+        // Construire un ID où bit7 = 1 pour vérifier la branche ServiceTypeId
+        let id = ExtendedId::new(0x1807_0081).expect("Invalid ExtendedId"); // bit7=1
+        let payload = [0x01, 0xC0];
+        let frame = DroneCanFrame::new(id, &payload).expect("Failed to create service frame");
+
+        assert!(frame.service_not_message);
+        match &frame.mtid {
+            MessageIdMiddleBytes::ServiceTypeId(_) => {}
+            _ => panic!("Expected ServiceTypeId"),
+        }
+    }
+
+    #[test]
+    fn test_anonymous_message_parsing() {
+        // source_node_id = 0, service_not_message = 0
+        let id = ExtendedId::new(0x1800_0000).expect("Invalid ExtendedId");
+        let payload = [0x01, 0xC0];
+        let frame = DroneCanFrame::new(id, &payload).expect("Failed to create anonymous frame");
+
+        assert_eq!(frame.source_node_id, 0);
+        assert!(!frame.service_not_message);
+        match &frame.mtid {
+            MessageIdMiddleBytes::AnoMessageTypeId(_) => {}
+            _ => panic!("Expected AnoMessageTypeId"),
+        }
+    }
+
+    #[test]
+    fn test_middle_frame_tail_byte() {
+        // Start=0, End=0, Toggle=1 → tail byte = 0x40
+        let id = ExtendedId::new(0x18FF0001).expect("Invalid ExtendedId");
+        let payload = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x40];
+        let frame = DroneCanFrame::new(id, &payload).expect("Failed to create middle frame");
+
+        match &frame.payload {
+            PayloadType::StartMessagePayload(_) => panic!("Should not be Start"),
+            _ => {} // vérifier ici le variant attendu pour "middle"
+        }
+    }
+
+    #[test]
+    fn test_end_frame_tail_byte() {
+        // Start=0, End=1, Toggle=1 → tail byte = 0xC0... attention : 0xC0 = Start=1,End=1
+        // End-only = 0x40 | 0x40(end bit) → à adapter selon le mapping exact bit7/bit6
+        let id = ExtendedId::new(0x18FF0001).expect("Invalid ExtendedId");
+        let payload = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x60]; // End=1,Toggle=1,Start=0
+        let frame = DroneCanFrame::new(id, &payload).expect("Failed to create end frame");
+        // vérifier le variant "EndMessagePayload" attendu
+    }
+
+    #[test]
+    fn test_new_remote_always_none() {
+        let id = ExtendedId::new(0x18FF0001).expect("Invalid ExtendedId");
+        assert!(DroneCanFrame::new_remote(id, 8).is_none());
+    }
+
+    #[test]
+    fn test_priority_boundary_values() {
+        // priority = 0 (bits 24-28 = 00000)
+        let id_min = ExtendedId::new(0x0000_0001).expect("Invalid ExtendedId");
+        let frame_min = DroneCanFrame::new(id_min, &[0xC0]).expect("Failed min priority");
+        assert_eq!(frame_min.priority, 0);
+
+        // priority = 31 (bits 24-28 = 11111)
+        let id_max = ExtendedId::new(0x1F00_0001).expect("Invalid ExtendedId");
+        let frame_max = DroneCanFrame::new(id_max, &[0xC0]).expect("Failed max priority");
+        assert_eq!(frame_max.priority, 31);
+    }
+
+    #[test]
+    fn test_source_node_id_boundary_values() {
+        // node id = 1 (min valide, hors anonyme)
+        let id_min = ExtendedId::new(0x1800_0001).expect("Invalid ExtendedId");
+        let frame_min = DroneCanFrame::new(id_min, &[0xC0]).expect("Failed min node id");
+        assert_eq!(frame_min.source_node_id, 1);
+
+        // node id = 127 (max valide)
+        let id_max = ExtendedId::new(0x1800_007F).expect("Invalid ExtendedId");
+        let frame_max = DroneCanFrame::new(id_max, &[0xC0]).expect("Failed max node id");
+        assert_eq!(frame_max.source_node_id, 127);
+    }
+
+    #[test]
+    fn test_roundtrip_full_equality() {
+        let id = ExtendedId::new(0x18FF0001).expect("Invalid ExtendedId");
+        let payload = [0x01, 0x02, 0xC0];
+        let frame = DroneCanFrame::new(id, &payload).expect("Failed to create frame");
+        let roundtrip = DroneCanFrame::new(frame.id(), frame.data())
+            .expect("Failed roundtrip");
+
+        assert_eq!(roundtrip.priority, frame.priority);
+        assert_eq!(roundtrip.source_node_id, frame.source_node_id);
+        assert_eq!(roundtrip.service_not_message, frame.service_not_message);
+        assert_eq!(roundtrip.dlc(), frame.dlc());
+        assert_eq!(roundtrip.data(), frame.data());
+        // Idéalement : comparer aussi les variants de mtid et payload (nécessite PartialEq/Debug)
+    }
+
+    #[test]
+    fn test_anonymous_multiframe_rejected() {
+        // source_node_id = 0 (anonyme) + tail byte Start (multi-trame) → doit être rejeté
+        let id = ExtendedId::new(0x1800_0000).expect("Invalid ExtendedId");
+        let payload = [0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x80];
+        assert!(DroneCanFrame::new(id, &payload).is_none());
     }
 }
