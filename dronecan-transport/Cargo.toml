@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 embedded-can = "0.4.1"
-
+heapless = "0.9.3"
+dronecan-core = { path = "../dronecan-core" }
 
 #![no_std]
