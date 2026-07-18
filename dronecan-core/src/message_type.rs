@@ -36,10 +36,22 @@ impl ServiceTypeId {
             dest_node_id: (mtid_middle_bytes as u8) & 0x7F,
         }
     }
+
 }
 
 pub enum MessageIdMiddleBytes {
     MessageTypeId(MessageTypeId),
     AnoMessageTypeId(AnoMessageTypeId),
     ServiceTypeId(ServiceTypeId),
+}
+
+impl MessageIdMiddleBytes {
+    pub fn get_data_type_id(&self) -> u16 {
+        match self {
+            MessageIdMiddleBytes::MessageTypeId(m)    => m.mtid,
+            MessageIdMiddleBytes::AnoMessageTypeId(a) => a.lbmtid as u16,
+            MessageIdMiddleBytes::ServiceTypeId(s)    => s.stid as u16,
+        }
+    }
+
 }

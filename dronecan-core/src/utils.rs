@@ -22,20 +22,25 @@ impl CrcData {
     }
 }
 
-// D2FINIR UNE REFERENCE CALCULEE A PARTIR DE L'ALGO DEPUIS EXTERIEUR DU CODE
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn crc_of_known_payload_matches_reference() {
-        let payload = [0x01, 0x02, 0x03];
-        assert_eq!(
-            CrcData::from_payload(&payload),
-            CrcData {
-                crc_1: 0xAD,
-                crc_2: 0xAD
-            }
-        );
+    fn crc_matches_reference_check_value() {
+        // Valeur officielle de référence de l'algo CRC-16-CCITT-FALSE
+        let payload = b"123456789";
+        assert_eq!(TRANSFER_CRC.checksum(payload), 0x29B1);
+    }
+
+    #[test]
+    fn crc_with_data_type_signature() {
+        // TODO: remplacer par la vraie signature DSDL du message ciblé
+        let data_type_signature: u64 = 0x0000_0000_0000_03F3;
+        let mut buf = [0u8; 8 + 3];
+        buf[..8].copy_from_slice(&data_type_signature.to_le_bytes());
+        buf[8..].copy_from_slice(&[0x01, 0x02, 0x03]);
+        let value = TRANSFER_CRC.checksum(&buf);
+        // Comparer avec une capture réseau réelle (Wireshark/candump) ou pyuavcan
     }
 }

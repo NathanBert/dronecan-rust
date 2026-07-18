@@ -151,6 +151,40 @@ impl PayloadType {
             MiddleMessagePayload::new(data)?,
         ))
     }
+
+    pub fn get_transfert_id(&self) -> u8 {
+        match self {
+            PayloadType::MiddleMessagePayload(m) => m.tailbyte.transfer_id(),
+            PayloadType::EndMessagePayload(e) => e.tailbyte.transfer_id(),
+            PayloadType::StartMessagePayload(s) => s.tailbyte.transfer_id(),
+            PayloadType::SingleMessagePayload(s) => s.tailbyte.transfer_id(),
+        }
+    }
+
+    pub fn end_of_transfer(&self) -> bool {
+        match self {
+            PayloadType::EndMessagePayload(_) => true,
+            PayloadType::SingleMessagePayload(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn start_of_transfer(&self) -> bool {
+        match self {
+            PayloadType::StartMessagePayload(_) => true,
+            PayloadType::SingleMessagePayload(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn toggle(&self) -> bool{
+        match self {
+            PayloadType::MiddleMessagePayload(m) => m.tailbyte.toggle(),
+            PayloadType::EndMessagePayload(e) => e.tailbyte.toggle(),
+            PayloadType::StartMessagePayload(s) => s.tailbyte.toggle(),
+            PayloadType::SingleMessagePayload(s) => s.tailbyte.toggle(),
+        }
+    }
 }
 
 #[cfg(test)]

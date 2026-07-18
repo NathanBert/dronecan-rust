@@ -4,6 +4,7 @@ use crate::message_type::{AnoMessageTypeId, MessageIdMiddleBytes, MessageTypeId,
 
 use crate::payload::PayloadType;
 
+
 pub struct DroneCanFrame {
     pub id: Id,
     pub priority: u16,
@@ -101,6 +102,28 @@ impl Frame for DroneCanFrame {
         &self.raw_data[..self.dlc]
     }
 }
+
+
+impl DroneCanFrame {
+    pub fn get_frame_key(&self) -> (u8,u16,u8){
+        (self.source_node_id, self.mtid.get_data_type_id(), self.payload.get_transfert_id())
+    }
+
+
+    pub fn end_of_transfer(&self) -> bool {
+        self.payload.end_of_transfer()
+    }
+
+    pub fn start_of_transfer(&self) -> bool {
+        self.payload.end_of_transfer()
+    }
+
+    pub fn toggle(&self) -> bool {
+        self.payload.toggle()
+    }
+}
+
+
 
 #[cfg(test)]
 mod tests {
